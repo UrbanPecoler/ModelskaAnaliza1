@@ -37,15 +37,12 @@ initial_guess[1::2] *= 2 * np.pi # phi in [0, 2*pi]
 result = minimize(potential_energy, initial_guess, args=(N,), method='BFGS')
 optimal_angles = result.x
 
-# Convert initial and final angles to cartesian coordinates
 initial_points = [spherical_to_cartesian(initial_guess[2*i], initial_guess[2*i+1]) for i in range(N)]
 final_points = [spherical_to_cartesian(optimal_angles[2*i], optimal_angles[2*i+1]) for i in range(N)]
 
-# Plot the results on a 3D wireframe sphere with animation
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-# Sphere wireframe with less density (fewer lines)
 u = np.linspace(0, 2 * np.pi, 15) 
 v = np.linspace(0, np.pi, 8)       
 x = np.outer(np.cos(u), np.sin(v))
@@ -54,11 +51,9 @@ z = np.outer(np.ones(np.size(u)), np.cos(v))
 
 ax.plot_wireframe(x, y, z, color='b', linewidth=0.5, alpha=0.6)  
 
-# Initialize scatter plot for points and lines
 scatter = ax.scatter([], [], [], color='r', s=100)
 lines = []
 
-# Function to interpolate points between initial and final positions
 def interpolate_points(t):
     points = []
     for i in range(N):

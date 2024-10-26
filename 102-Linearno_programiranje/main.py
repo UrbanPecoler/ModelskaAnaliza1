@@ -106,16 +106,24 @@ def plot_heatmap(labels, save=""):
         plt.savefig(f"./Images/map_{save}")
     plt.show()
 
-def latex_table(string_list, array1, array2):
-    # Start table
-    latex_code = "\\begin{table}[h!]\n\\centering\n\\begin{tabular}{|c|c|c|}\n\\hline\n"
-    latex_code += "Item & Array1 &  Cena (EUR) \\\\\n\\hline\n"
+def latex_table(string_list, *arrays):
+    # Glava tabele
+    # num_columns = len(arrays) + 1  # +1 za prvi stolpec (Item)
+    column_format = "|c" + "|c" * len(arrays) + "|"
+    
+    latex_code = "\\begin{table}[h!]\n\\centering\n\\begin{tabular}{" + column_format + "}\n\\hline\n"
+    header = "Item" + "".join([f" & Array{i + 1}" for i in range(len(arrays))]) + " \\\\\n\\hline\n"
+    latex_code += header
 
     # Populate rows
     for i in range(len(string_list)):
-        latex_code += f"{string_list[i]} & {array1[i]:.2f} & {array2[i]:.2f} \\\\\n"
+        row = f"{string_list[i]}"
+        for array in arrays:
+            row += f" & {array[i]:.2f}"
+        row += " \\\\\n"
+        latex_code += row
 
-    # End table
+    # Konec tabele
     latex_code += "\\hline\n\\end{tabular}\n\\caption{Your Caption}\n\\end{table}"
 
     return latex_code
@@ -163,7 +171,6 @@ sez4 = (full_x * cena)[labels]
 
 # print(latex_table(sez1, sez2, sez3, sez4))
 
-
 # plot_heatmap(labels, save="brez-prva-kal")
 # plot_hist(x, save="brez-prva-kal")
 
@@ -175,19 +182,19 @@ b_ub = np.array([-2000., -310., -50., -1000., -18., -60., -3500., -500., 2400, 2
 A_ub[0] = -energija
 
 labels, x, full_x = linear_prog(c, A_ub, b_ub)
-# # Podatki za tabelo
-# sez1 = zivilo[labels]
-# sez2 = (full_x * energija)[labels]
-# sez3 = (full_x * mascobe)[labels]
-# sez4 = x * 100
-# sez5 = (full_x * cena)[labels]
+
+# Podatki za tabelo
+sez1 = zivilo[labels]
+sez2 = (full_x * energija)[labels]
+sez3 = (full_x * mascobe)[labels]
+sez4 = x * 100
+sez5 = (full_x * cena)[labels]
 
 # # print(latex_table(sez1, sez2, sez3, sez4, sez5))
 # print(f"Skupaj energija: {total_var(energija, full_x)}")
 # print(f"Skupaj cena: {total_var(cena, full_x)}")
 # print(f"skupaj masa: {sum(x)*100}")
 # print(f"Skupaj maščobe: {total_var(mascobe, full_x)}")
-
 
 # print(total_var(energija, full_x))
 # plot_hist(x, save="prva-masc")
@@ -201,11 +208,11 @@ A_ub = np.array([-energija, -mascobe, -ogljikovi_hidrati, -proteini, -ca, -fe,
 
 labels, x, full_x = linear_prog(c, A_ub, b_ub)
 
-# # Podatki za tabelo
-# sez1 = zivilo[labels]
-# sez2 = (full_x * energija)[labels]
-# sez4 = x * 100
-# sez5 = (full_x * cena)[labels]
+# Podatki za tabelo
+sez1 = zivilo[labels]
+sez2 = (full_x * energija)[labels]
+sez4 = x * 100
+sez5 = (full_x * cena)[labels]
 
 # print(latex_table(sez1, sez2, sez4, sez5))
 # print(f"Skupaj energija: {total_var(energija, full_x)}")
@@ -274,20 +281,23 @@ for cena_ in cene:
 fig, ax1 = plt.subplots()
 
 # Prvi scatter plot za maso (rdeča barva, levi y)
-# ax1.scatter(cene, masa_sez, s=1, c="r", label="Masa")
-# ax1.set_xlabel("Cena (EUR)")
-# ax1.set_ylabel("Masa (g)", color="r")
-# ax1.tick_params(axis='y', labelcolor="r")
+def plot_energija_cena(save=False):
+    ax1.scatter(cene, masa_sez, s=1, c="r", label="Masa")
+    ax1.set_xlabel("Cena (EUR)")
+    ax1.set_ylabel("Masa (g)", color="r")
+    ax1.tick_params(axis='y', labelcolor="r")
 
-# ax2 = ax1.twinx()
-# ax2.scatter(cene, energija_sez, s=1, c="b", label="Energija")
-# ax2.set_ylabel("Energija [kcal]", color="b")
-# ax2.tick_params(axis='y', labelcolor="b")
+    ax2 = ax1.twinx()
+    ax2.scatter(cene, energija_sez, s=1, c="b", label="Energija")
+    ax2.set_ylabel("Energija [kcal]", color="b")
+    ax2.tick_params(axis='y', labelcolor="b")
 
-# fig.tight_layout()
-# plt.savefig("./Images/energija_cena")
-# plt.show()
+    fig.tight_layout()
+    if save:
+        plt.savefig("./Images/energija_cena")
+    plt.show()
 
+# plot_energija_cena(save=True)
 
 # ŠESTI DEL -- NOVA DIETA
 df = pd.read_excel('LowCarb.xlsx')

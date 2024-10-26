@@ -8,16 +8,6 @@ from tqdm import tqdm
 import time
 
 # TODO
-# X Plot na sferi za različne N (npr. 9) DONE
-# - Specifični začetni pogoji (KAJ NAREDIT S TEM)
-# X Energija rešitev problema (mogoče za več metod) + Fit energije na naboj v odvisnosti od naboja (linearna premica)
-# X Časovna zahtevnost za različne metode (N: 1 --> 100)
-# X Relativna napaka od tabeliranih vrednosti iz wikipedije
-# X Poraba spomina
-# X Uspešnost naključnih začetnih pogojev za 300 poskusov (histogram)
-# X Dipolni moment? (vsote radij vektorjev absolutno), mogoče še plotaš na sfero z puščicami
-# X Kvadrupolni moment??? KAKO??
-# X Konvergenca k enakomerni porazdelitvi nabojev? ()
 
 def random_guess(N):
     initial_guess = np.random.rand(2 * N)
@@ -35,7 +25,8 @@ def sphere2kart(theta, phi):
 def razdalja_sfera(p1, p2):
     return np.linalg.norm(p1 - p2)
 
-neg = False
+neg = False # True samo za primer, ko imam + in - naboje na krogli
+
 def E_potencial(params, N, neg=neg):
     energy = 0
     points = []
@@ -59,8 +50,7 @@ def E_potencial(params, N, neg=neg):
 
 
 def thomson_plot(N_list, porocilo=True):
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
+
     if porocilo:
         fig, axs = plt.subplots(2, 2, subplot_kw={'projection': '3d'}, figsize=(12, 12))
     else:
@@ -86,7 +76,7 @@ def thomson_plot(N_list, porocilo=True):
         y = np.outer(np.sin(u), np.sin(v))
         z = np.outer(np.ones(np.size(u)), np.cos(v))
 
-        ax.plot_wireframe(x, y, z, color='black', linewidth=0.5, alpha=0.15)  # Use wireframe instead of surface
+        ax.plot_wireframe(x, y, z, color='black', linewidth=0.5, alpha=0.15)  
         # ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r, alpha=0.6, rstride=1, cstride=1, antialiased=True)
         initial_points = [sphere2kart(initial_guess[2*i], initial_guess[2*i+1]) for i in range(N)]
 
@@ -136,13 +126,14 @@ color_map = {
     'SLSQP': colors[4]
 }
 
+# MAIN PARAMETRA
 N_max = 70
 step = 3
 
 # ============================================================================================
 # RAZDALJA MED TOČKAMI V ODVISNOSTI OD N IN VOLUMEN POLIEDRA za AMEBO 
 # TODO
-# - Povprečna razdalja ne limitira pravilno
+
 def dist_vol(N, method='Nelder-Mead'):
     """Compute the average pairwise distance between points for a given N."""
     initial_guess = random_guess(N)
@@ -207,9 +198,9 @@ def plot_energy():
     ax1.scatter(Ns, e_, color=colors[0], label="Nelder-Mead")
     ax2.scatter(Ns, e_/N, color=colors[0], label="Nelder-Mead")
 
-    # Linearni fit
-    filtered_Ns = Ns[Ns > 15]
-    filtered_e_N = e_[Ns > 15] / Ns[Ns > 15]
+    # Linearni fit za N > 10
+    filtered_Ns = Ns[10:]
+    filtered_e_N = e_[10:] / Ns[10:]
     slope, intercept = np.polyfit(filtered_Ns, filtered_e_N, 1)
     fit_line = slope * np.array(filtered_Ns) + intercept
     ax2.plot(filtered_Ns, fit_line, color=colors[0], linestyle='--', label=f'"Nelder-Mead" fit')
@@ -268,6 +259,7 @@ def plot_analysis():
         return mem_info.rss / (1024 ** 2)
 
     def rel_err(method, Ns=Ns, e_wiki=e_wiki):
+        """ Relativna napaka energije """
         e_wiki = [e_wiki[N_ - 2] for N_ in Ns]
         return np.abs(np.array(e_wiki)-np.array(results[method]["e"]))/np.array(e_wiki)
 
@@ -326,7 +318,6 @@ def plot_analysis():
 # plot_analysis()
 
 # PRAVILNOST MINIMIZACIJE
-# TODO Nism čist ziher glede rezultatov, predvsem Powell
 def plot_min_hist():
     N = 5
     e_val = e_wiki[3]
@@ -350,7 +341,7 @@ def plot_min_hist():
 
     plt.figure(figsize=(10, 6)) 
     bars = plt.bar(method_names, counters, color=[color_map[method] for method in method_names])  
-    plt.axhline(y=iter, color='black', linestyle='--')
+    plt.axhline(iter, color='black', linestyle='--')
 
     plt.xlabel('Methods')
     plt.xticks(rotation=45)
@@ -369,7 +360,7 @@ def plot_min_hist():
 # plot_min_hist()
 
 # DIPOLNI MOMENT
-# TODO ZA VSE METODE
+# TODO 
 def dipole_moment(params, N):
     dipole = np.zeros(3) 
     for i in range(N):
@@ -387,8 +378,8 @@ Ns = np.arange(2, N_max, step, dtype=int)
 dipol_wiki = [dipol_wiki[N_ - 2] for N_ in Ns]
 
 def plot_dipole():
-    fig, axs = plt.subplots(3, 2, figsize=(15, 10))  # Create a grid of 3x3 subplots
-    axs = axs.flatten()  # Flatten the 2D array of axes to easily iterate over it
+    fig, axs = plt.subplots(3, 2, figsize=(15, 10))  
+    axs = axs.flatten()  
 
     for i, method in enumerate(methods):
         dipole_moments = []
@@ -398,7 +389,6 @@ def plot_dipole():
             dipole = dipole_moment(result.x, N) 
             dipole_moments.append(dipole)
 
-        # Plot the dipole moments for the current method
         axs[i].scatter(Ns, dipol_wiki, color="gray", label="Dipol Wiki", s=150)
         axs[i].scatter(Ns, dipole_moments, color=color_map[method], label=method, s=70)
         axs[i].set_title(f"Dipole Moment using {method}")
@@ -407,111 +397,104 @@ def plot_dipole():
         axs[i].legend()
         axs[i].grid()
 
-    plt.tight_layout()  # Adjust layout to prevent overlap
+    plt.tight_layout()  
     plt.savefig("./Images/Dipole")
     plt.close()
 
-plot_dipole()
+# plot_dipole()
 
+
+""" Ideje za katere mi je zmanjkalo časa, da bi jih naredil pravilno in uporabil v poročilu"""
+# ==============================================================================================
 # KVADRUPOLNI MOMENT
 # TODO Ni še čisto prav
-# def quadrupole_tensor(points):
-#     """Calculate the quadrupole tensor Q_ij for a set of points on a sphere."""
-#     Q = np.zeros((3, 3)) 
-#     for p in points:
-#         r2 = np.dot(p, p)  # r_k^2
-#         for i in range(3):
-#             for j in range(3):
-#                 Q[i, j] += 3 * p[i] * p[j] - (r2 if i == j else 0)
-#     return Q
+def quadrupole_tensor(points):
+    """Calculate the quadrupole tensor Q_ij for a set of points on a sphere."""
+    Q = np.zeros((3, 3)) 
+    for p in points:
+        r2 = np.dot(p, p)  # r_k^2
+        for i in range(3):
+            for j in range(3):
+                Q[i, j] += 3 * p[i] * p[j] - (r2 if i == j else 0)
+    return Q
 
-# def plot_quadrupole_3d(N, points, quadrupole_tensor):
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+def plot_quadrupole_3d(N, points, quadrupole_tensor):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-#     # Plot charges on the sphere
-#     ax.scatter(*np.array(points).T, color='blue', s=50, label='Charges')
+    # Plot charges on the sphere
+    ax.scatter(*np.array(points).T, color='blue', s=50, label='Charges')
 
-#     # Plot the principal axes of the quadrupole moment
-#     eigvals, eigvecs = np.linalg.eig(quadrupole_tensor)
-#     for val, vec in zip(eigvals, eigvecs.T):
-#         ax.quiver(0, 0, 0, vec[0], vec[1], vec[2], length=np.abs(val)*2, color='red', linewidth=2, label='Principal Axis')
+    # Plot the principal axes of the quadrupole moment
+    eigvals, eigvecs = np.linalg.eig(quadrupole_tensor)
+    for val, vec in zip(eigvals, eigvecs.T):
+        ax.quiver(0, 0, 0, vec[0], vec[1], vec[2], length=np.abs(val)*2, color='red', linewidth=2, label='Principal Axis')
 
-#     # Plot a sphere for reference
-#     u = np.linspace(0, 2 * np.pi, 30)
-#     v = np.linspace(0, np.pi, 30)
-#     x = np.outer(np.cos(u), np.sin(v))
-#     y = np.outer(np.sin(u), np.sin(v))
-#     z = np.outer(np.ones(np.size(u)), np.cos(v))
-#     ax.plot_wireframe(x, y, z, color='gray', alpha=0.3)
+    # Plot a sphere for reference
+    u = np.linspace(0, 2 * np.pi, 30)
+    v = np.linspace(0, np.pi, 30)
+    x = np.outer(np.cos(u), np.sin(v))
+    y = np.outer(np.sin(u), np.sin(v))
+    z = np.outer(np.ones(np.size(u)), np.cos(v))
+    ax.plot_wireframe(x, y, z, color='gray', alpha=0.3)
 
-#     ax.set_xlabel('X')
-#     ax.set_ylabel('Y')
-#     ax.set_zlabel('Z')
-#     plt.title(f'Quadrupole Moment Principal Axes for N = {N}')
-#     plt.close()
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    plt.title(f'Quadrupole Moment Principal Axes for N = {N}')
+    plt.close()
 
-# # Example 3D visualization for a specific N
-# N = 7  # Example value
+# N = 7  
 # initial_guess = random_guess(N)
 
-# # Minimize the potential energy
 # result = minimize(E_potencial, initial_guess, args=(N,), method='BFGS')
 # optimal_angles = result.x
 # optimal_points = [sphere2kart(optimal_angles[2*i], optimal_angles[2*i+1]) for i in range(N)]
 
-# # Calculate quadrupole tensor
 # Q = quadrupole_tensor(optimal_points)
-
-# # Plot quadrupole moment in 3D
 # plot_quadrupole_3d(N, optimal_points, Q)
 
 # SPECIFIČNI ZAČETNI POGOJI
-# TODO
-# - Pogruntaj kaj naredit s tem, oz če uporabiš to v poročilu?
-
-
-
+# TODO - Pogruntaj kaj naredit s tem, oz če uporabiš to v poročilu?
 
 
 # RAZLIČNO PREDZNAČENI NABOJI NA KROGLI
-# TODO
-# def random_guess_neg(N):
-#     return np.random.rand(2 * N * 2) * np.array([np.pi, 2 * np.pi] * (N + N))  
+# NOTE Ni pravilno...
+def random_guess_neg(N):
+    return np.random.rand(2 * N * 2) * np.array([np.pi, 2 * np.pi] * (N + N))  
 
-# neg = True
-# def thomson_plot(N):
-#     initial_guess = random_guess_neg(N)
-#     result = minimize(E_potencial, initial_guess, args=(N,), method='BFGS')
-#     print(result)
-#     optimal_angles = result.x
+neg = True
+def thomson_plot(N):
+    initial_guess = random_guess_neg(N)
+    result = minimize(E_potencial, initial_guess, args=(N,), method='BFGS')
+    print(result)
+    optimal_angles = result.x
 
-#     optimal_points_pos = [sphere2kart(optimal_angles[2*i], optimal_angles[2*i+1]) for i in range(N)]
-#     optimal_points_neg = [sphere2kart(optimal_angles[2*(i + N)], optimal_angles[2*(i + N) + 1]) for i in range(N)]
+    optimal_points_pos = [sphere2kart(optimal_angles[2*i], optimal_angles[2*i+1]) for i in range(N)]
+    optimal_points_neg = [sphere2kart(optimal_angles[2*(i + N)], optimal_angles[2*(i + N) + 1]) for i in range(N)]
 
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-#     # Sfera z sivim gradientom
-#     u = np.linspace(0, 2 * np.pi, 30)
-#     v = np.linspace(0, np.pi, 15)
-#     x = np.outer(np.cos(u), np.sin(v))
-#     y = np.outer(np.sin(u), np.sin(v))
-#     z = np.outer(np.ones(np.size(u)), np.cos(v))
+    # Sfera z sivim gradientom
+    u = np.linspace(0, 2 * np.pi, 30)
+    v = np.linspace(0, np.pi, 15)
+    x = np.outer(np.cos(u), np.sin(v))
+    y = np.outer(np.sin(u), np.sin(v))
+    z = np.outer(np.ones(np.size(u)), np.cos(v))
 
-#     # Plot the surface of the sphere with the gradient
-#     ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r, alpha=0.6, rstride=1, cstride=1, antialiased=True)
+    ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r, alpha=0.6, rstride=1, cstride=1, antialiased=True)
 
-#     for point in optimal_points_pos:
-#         ax.scatter(point[0], point[1], point[2], color='g', s=80)  # Pozitivni naboji
+    for point in optimal_points_pos:
+        ax.scatter(point[0], point[1], point[2], color='g', s=80)  # Pozitivni naboji
 
-#     for point in optimal_points_neg:
-#         ax.scatter(point[0], point[1], point[2], color='b', s=50)  # Negativni naboji
+    for point in optimal_points_neg:
+        ax.scatter(point[0], point[1], point[2], color='b', s=50)  # Negativni naboji
 
-#     ax.set_xlabel('X')
-#     ax.set_ylabel('Y')
-#     ax.set_zlabel('Z')
-#     plt.show()
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    plt.show()
 
 
 # thomson_plot(8)

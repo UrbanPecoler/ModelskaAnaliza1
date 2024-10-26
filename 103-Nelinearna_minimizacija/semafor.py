@@ -7,6 +7,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
 # plt.rcParams.update({'font.size': 16})
+save = False
 
 # PARAMETRI
 N=25
@@ -51,7 +52,8 @@ for i, v0 in enumerate(v0s):
 plt.ylabel(r"$ \nu $", fontsize=16)
 plt.xlabel(r"$ \tau $", fontsize=16)
 plt.legend(ncol=4, frameon=True, edgecolor="k")
-# plt.savefig("./Images/Semafor_v0vk")
+if save:
+    plt.savefig("./Images/Semafor_v0vk")
 plt.show()
 
 # FIKSNA KONČNA HITROST
@@ -64,7 +66,8 @@ for i, v0 in enumerate(v0s):
 plt.ylabel(r"$ \nu $", fontsize=16)
 plt.xlabel(r"$ \tau $", fontsize=16)
 plt.legend(ncol=4, frameon=True, edgecolor="k")
-# plt.savefig("./Images/Semafor_fix-vk")
+if save:
+    plt.savefig("./Images/Semafor_fix-vk")
 plt.show()
 
 # PROST ROBNI POGOJ
@@ -77,10 +80,11 @@ for i, v0 in enumerate(v0s):
 plt.ylabel(r"$ \nu $", fontsize=16)
 plt.xlabel(r"$ \tau $", fontsize=16)
 plt.legend(ncol=4, frameon=True, edgecolor="k")
-# plt.savefig("./Images/Semafor_prost")
+if save:
+    plt.savefig("./Images/Semafor_prost")
 plt.show()
 
-
+# =========================================================================================================
 # ZVEZNA SLIKA
 t = np.linspace(0, 1, 1000, endpoint=True)
 
@@ -88,9 +92,9 @@ def hitrost1(t, v0):
     return v0 + 3/2*(1-v0)*(2*t - t**2)
 
 def hitrost2(t, v0, v_max):
-    return 3*(2-v0-v_max)*(t - t**2) + (v_max - v0)*t + v0 # Naj bi blo tk -- usaj grafi so pravilni
+    return 3*(2-v0-v_max)*(t - t**2) + (v_max - v0)*t + v0
 
-def plot_zvezno(model="osnovni"):
+def plot_zvezno(model="osnovni", save=save):
     v0s = np.array([0.2, 0.4, 0.7, 1, 1.2, 1.5, 1.8, 2.0])
     
     norm = mcolors.Normalize(vmin=v0s.min(), vmax=v0s.max())
@@ -111,12 +115,13 @@ def plot_zvezno(model="osnovni"):
     plt.xlabel(r" $ \tau $")
     plt.title(r"$ \nu (\tau) $")
 
-    if model.lower() == "osnovni":
-        plt.savefig("./Images/osnovni_model")
+    if save:
+        if model.lower() == "osnovni":
+            plt.savefig("./Images/osnovni_model")
 
-    elif model.lower() == "radar zacetna":
-        plt.savefig("./Images/radar_model")
-        # pass
+        elif model.lower() == "radar zacetna":
+            plt.savefig("./Images/radar_model")
+
     plt.show()
 
 plot_zvezno()
